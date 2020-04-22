@@ -1,0 +1,206 @@
+#include<iostream>
+#include<cstdio>
+#include<cstring>
+
+using namespace std;
+const int N = 16,M=N*N+1;
+int ones[1 << N], lg[1 << N];
+int state[N][N];
+char str[N][N + 1];
+int bstate[M][N][N],bstate2[M][N][N];
+char bstr[M][N][N+1];
+inline int lowbit(int x)
+{
+	return x & -x;
+}
+void draw(int x, int y, int c)
+{
+	str[x][y] = c+'A';
+	for (int i = 0; i < N; i++)
+	{
+		state[x][i] &= ~(1 << c);
+		state[i][y] &= ~(1 << c);
+	}
+	int sx = x / 4*4,sy=y/4*4;
+	for (int i = 0; i < 4; i++)
+		for (int j = 0; j < 4; j++)
+			state[sx + i][sy + j] &= ~(1 << c);
+	state[x][y] = 1 << c;
+}
+bool dfs(int cnt)
+{
+	if (!cnt) return true;
+	int bcnt = cnt;
+	memcpy(bstate[bcnt], state, sizeof(state));
+	memcpy(bstr[bcnt], str, sizeof(str));
+	for (int i = 0; i < N; i++)
+	{
+		for (int j = 0; j < N; j++)
+		{
+			if (str[i][j] == '-')
+			{
+				if (!state[i][j])
+				{
+					memcpy(state, bstate[bcnt], sizeof(state));
+					memcpy(str, bstr[bcnt], sizeof(str));
+					
+					return false;
+				}
+				if (ones[state[i][j]] == 1)
+				{
+					draw(i, j, lg[state[i][j]]);
+					cnt--;
+				}
+			}
+		}
+	}
+	for (int i = 0; i < N; i++)
+	{
+		int sor = 0,sand = (1 << N) - 1,drawn=0;
+		for (int j = 0; j < N; j++)
+		{
+			sand &= ~(state[i][j]&sor);
+			sor |= state[i][j];
+			if (str[i][j] != '-') drawn |= state[i][j];
+		}
+		if (sor != (1 << N) - 1)
+		{
+			memcpy(state, bstate[bcnt], sizeof(state));
+			memcpy(str, bstr[bcnt], sizeof(str));
+			
+			return false;
+		}
+		for (int j = sand; j; j -= lowbit(j))
+		{
+			if (!(drawn & lowbit(j)))
+			{
+				for (int k = 0; k < N; k++)
+				{
+					if (state[i][k]&lowbit(j))
+					{
+						draw(i, k, lg[lowbit(j)]);
+						cnt--;
+						break;
+					}
+				}
+			}
+		}
+	}
+	for (int i = 0; i < N; i++)
+	{
+		int sor = 0, sand = (1 << N) - 1, drawn = 0;
+		for (int j = 0; j < N; j++)
+		{
+			sand &= ~(state[j][i] & sor);
+			sor |= state[j][i];
+			if (str[j][i] != '-') drawn |= state[j][i];
+		}
+		if (sor != (1 << N) - 1)
+		{
+			memcpy(state, bstate[bcnt], sizeof(state));
+			memcpy(str, bstr[bcnt], sizeof(str));
+			
+			return false;
+		}
+		for (int j = sand; j; j -= lowbit(j))
+		{
+			if (!(drawn & lowbit(j)))
+			{
+				for (int k = 0; k < N; k++)
+				{
+					if (state[k][i]&lowbit(j))
+					{
+						draw(k, i, lg[lowbit(j)]);
+						cnt--;
+						break;
+					}
+				}
+			}
+		}
+	}
+	for (int i = 0; i < N; i++)
+	{
+		int sor = 0, sand = (1 << N) - 1, drawn = 0;
+		for (int j = 0; j < N; j++)
+		{
+			int sx = i / 4 * 4, sy = i % 4 * 4, dx = j / 4, dy = j % 4;
+			sand &= ~(state[sx+dx][sy+dy] & sor);
+			sor |= state[sx+dx][sy+dy];
+			if (str[sx+dx][sy+dy] != '-') drawn |= state[sx+dx][sy+dy];
+		}
+		if (sor != (1 << N) - 1)
+		{
+			memcpy(state, bstate[bcnt], sizeof(state));
+			memcpy(str, bstr[bcnt], sizeof(str));
+			return false;
+		}
+		for (int j = sand; j; j -= lowbit(j))
+		{
+			if (!(drawn & lowbit(j)))
+			{
+				for (int k = 0; k < N; k++)
+				{
+					int sx = i / 4 * 4, sy = i % 4 * 4, dx = k / 4, dy = k % 4;
+					if (state[sx+dx][sy+dy] &lowbit(j))
+					{
+						draw(sx+dx, sy+dy, lg[lowbit(j)]);
+						cnt--;
+						break;
+					}
+				}
+			}
+		}
+	}
+	if (!cnt) return true;
+	int x, y, mini = 100;
+	for(int i=0;i<N;i++)
+		for (int j = 0; j < N; j++)
+		{
+			if (str[i][j] == '-' && ones[state[i][j]] < mini)
+			{
+				mini= ones[state[i][j]];
+				x = i; y = j;
+			}
+		}
+	memcpy(bstate2[bcnt], state, sizeof(state));
+	for (int i = state[x][y]; i; i -= lowbit(i))
+	{
+		memcpy(state, bstate2[bcnt], sizeof(state));
+		draw(x, y, lg[lowbit(i)]);
+		if (dfs(cnt - 1)) return true;
+	}
+	memcpy(state, bstate[bcnt], sizeof(state));
+	memcpy(str, bstr[bcnt], sizeof(str));
+	return false;
+}
+int main()
+{
+	for (int i = 0; i < N; i++) lg[1 << i] = i;
+	for (int i = 0; i < (1<<N); i++)
+	{
+		for (int j = i; j; j -= lowbit(j))
+			ones[i]++;
+	}
+	while (cin >> str[0])
+	{
+		for (int i = 1; i < N; i++) cin >> str[i];
+		for (int i = 0; i < N; i++)
+			for (int j = 0; j < N; j++)
+				state[i][j] = (1 << N)-1;
+		int cnt=0;
+		for(int i=0;i<N;i++)
+			for (int j = 0; j < N; j++)
+			{
+				if (str[i][j] != '-')
+				{
+					draw(i, j, str[i][j] - 'A');
+				}
+				else cnt++;
+			}
+		dfs(cnt);
+		for (int i = 0; i < N; i++)
+			cout << str[i] << endl;
+		puts("");
+	}
+	return 0;
+}
