@@ -1,0 +1,54 @@
+#include<vector>
+#include<queue>
+#include<iostream>
+#include<cstdio>
+#include<cstring>
+using namespace std;
+pair<int, int>start, endd,qhead;
+queue<pair<int, int> >q;
+int col, row,minii=9999999999;
+char map[160][160];
+int dis[160][160];
+int dx[9] = { 0,-2,-1,1,2,2,1,-1,-2 }, dy[9] = { 0,1,2,2,1,-1,-2,-2,-1 };
+int check(int x, int y)
+{
+	return x > 0 && x <= row && y > 0 && y <= col&&map[x][y]!='*'&&dis[x][y]==-1;
+}
+void bfs()
+{
+	memset(dis, -1, sizeof dis);
+	q.push(start);
+	dis[start.first][start.second] = 0;
+	while (q.size())
+	{
+		qhead = q.front();
+		q.pop();
+		for (int i = 1; i <= 8; i++)
+		{
+			int x = qhead.first + dx[i], y = qhead.second + dy[i];
+			if (check(x,y))
+			{
+				dis[x][y] = dis[qhead.first][qhead.second] + 1;
+				q.push({ x,y });
+				if (x == endd.first && y == endd.second) return;
+			}
+		}
+	}
+}
+int main()
+{
+	scanf("%d%d\n", &col, &row);
+	for (int i = 1; i <=row; i++)
+	{
+		for (int j = 1; j <= col; j++)
+		{
+			map[i][j] = getchar();
+			if (map[i][j] == 'K') { start.first = i; start.second = j; }
+			if (map[i][j] == 'H') { endd.first = i; endd.second = j; }
+		}
+		getchar();
+	}
+	bfs();
+	cout << dis[endd.first][endd.second];
+	return 0;
+}
