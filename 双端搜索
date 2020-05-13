@@ -1,0 +1,60 @@
+#include<iostream>
+#include<queue>
+#include<cstring>
+#include<unordered_map>
+#define strmap unordered_map<string,int>
+#define qstr queue<string>
+using namespace std;
+string a[10], b[10];
+int rule = 0;
+int trans(qstr &q,strmap &acnt,strmap &bcnt,string a[],string b[])
+{
+	auto str = q.front();
+	q.pop();
+	for (int i = 0; i<str.size();i++)
+	{
+		for (int j = 0; j < rule; j++)
+		{
+			if (str.substr(i, a[j].size()) != a[j])
+				continue;
+			string tem = str.substr(0, i) + b[j] + str.substr(i + a[j].size());
+			if (bcnt.count(tem))
+				return bcnt[tem] + acnt[str];
+			if (acnt.count(tem))
+				continue;
+			acnt[tem] = acnt[str] + 1;
+			q.push(tem);
+		}
+	}
+	return -1;
+}
+int bfs(string A,string B)
+{
+	strmap acnt, bcnt;
+	qstr astr, bstr;
+	astr.push(A); acnt[A] = 0;
+	bstr.push(B); bcnt[B] = 1;
+	while (astr.size()&&bstr.size())
+	{
+		if (acnt[astr.front()] + bcnt[bstr.front()] > 10)
+			return 11;
+		int cnt;
+		if (astr.size() < bstr.size())
+			cnt = trans(astr, acnt, bcnt,a,b);
+		else cnt = trans(bstr, bcnt, acnt,b,a);
+		if (cnt != -1)
+			return cnt;
+	}
+	return 11;
+}
+int main()
+{
+	string A, B;
+	cin >> A >> B;
+	while (cin >> a[rule] >> b[rule])
+		rule++;
+	int flag = bfs(A,B);
+	if (flag > 10) cout << "NO ANSWER!" << endl;
+	else cout << flag << endl;
+	return 0;
+}
