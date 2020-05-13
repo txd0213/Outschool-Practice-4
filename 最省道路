@@ -1,0 +1,99 @@
+#include<iostream>
+#include<queue>
+#include<cstring>
+using namespace std;
+const int N = 1010;
+const int M = 10100;
+const int maxcap = 107;
+int oil[N], expen[N][maxcap];
+int head[N], Next[2 * M], ver[2 * M], dist[2 * M], tot = -1;
+bool vis[N][maxcap];
+struct node
+{
+	int city, fuel, money;
+	node(int x, int y, int z) :city(x), fuel(y), money(z) {}
+	friend bool operator< (node a, node b)
+	{
+		return a.money > b.money;
+	}
+};
+void add(int x, int y, int z)
+{
+	ver[++tot] = y;
+	Next[tot] = head[x];
+	head[x] = tot;
+	dist[tot] = z;
+}
+bool ifbuy(int city, int fuel, int c)
+{
+	if (fuel + 1 <= c && !vis[city][fuel + 1] && expen[city][fuel + 1] > expen[city][fuel] + oil[city])
+		return true;
+	else return false;
+}
+bool ifgo(int fuel, int city2, int d, int money)
+{
+	if (fuel >= d && !vis[city2][fuel - d] && expen[city2][fuel - d] > money)
+		return true;
+	else return false;
+}
+int bfs(int cur,int start,int target)
+{
+	priority_queue<node>q;
+	memset(vis, false, sizeof vis);
+	memset(expen, 0x3f, sizeof expen);
+	expen[start][0] = 0;
+	q.push(node(start, 0, 0));
+	while (q.size())
+	{
+		node qhead = q.top();
+		q.pop();
+		int city = qhead.city, fuel = qhead.fuel, money = qhead.money;
+		vis[city][fuel] = true;
+		if (city == target)
+			return money;
+		if (ifbuy(city, fuel, cur))
+		{
+			expen[city][fuel + 1] = expen[city][fuel] + oil[city];
+			q.push(node(city, fuel + 1, expen[city][fuel + 1]));
+		}
+		for (int i = head[city]; i; i = Next[i])
+		{
+			if (ifgo(fuel, ver[i], dist[i], money))
+			{
+				expen[ver[i]][fuel-dist[i]]=money;
+				q.push(node(ver[i],fuel-dist[i],money));
+			}
+
+		}
+	}
+	return -1;
+}
+int n, m;
+int main()
+{
+	ios::sync_with_stdio(false);
+	FILE* fp;
+	/*freopen_s(&fp, "D:\\1.in", "r", stdout);
+	freopen_s(&fp, "D:\\my.out", "w", stdin);*/
+	cin >> n >> m;
+	for (int i = 0; i < n; i++)
+		cin >> oil[i];
+	for (int i = 1; i <= m; i++)
+	{
+		int u, v, d;
+		cin >> u >> v >> d;
+		add(u, v, d);
+		add(v, u, d);
+	}
+	int question;
+	cin >> question;
+	while (question--)
+	{
+		int c, s, e;
+		cin >> c >> s >> e;
+		int flag = bfs(c, s, e);
+		if (flag == -1) cout << "impossible" << endl;
+		else cout << flag << endl;
+	}
+	return 0;
+}
