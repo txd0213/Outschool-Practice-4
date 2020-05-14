@@ -1,0 +1,62 @@
+#include<iostream>
+#include<cstring>
+#include<algorithm>
+using namespace std;
+unsigned int  w, half;
+unsigned int g[50],a[(1<<24)+1];
+unsigned int cnt,ans;
+int n;
+void dfs1(int step,unsigned int weight)
+{
+	if (step == half)
+	{
+		a[cnt++] = weight;
+		return;
+	}
+	else
+	{
+		dfs1(step + 1, weight);
+		unsigned int x = g[step] + weight;
+		if (x <= w) dfs1(step + 1, x);
+	}
+}
+void calu(unsigned int weight)
+{
+	unsigned int rest = w - weight;
+	int l = 0, r = cnt-1;
+	while (l < r)
+	{
+		int mid = (l + r + 1) / 2;
+		if (a[mid] <= rest) l = mid;
+		else r = mid - 1;
+	}
+	ans = ans > weight + a[l] ? ans :( weight + a[l]);
+}
+void dfs2(int step, unsigned int weight)
+{
+	if (step == n + 1)
+	{
+		calu(weight);
+		return;
+	}
+	else
+	{
+		dfs2(step + 1, weight);
+		unsigned int x = weight + g[step];
+		if (x <= w) dfs2(step + 1, x);
+	}
+}
+int main()
+{
+	cin >> w >> n;
+	for (int i = 1; i <= n; i++) cin >> g[i];
+	sort(g + 1, g + n + 1);
+	reverse(g + 1, g + n + 1);
+	half = n / 2 + 3;
+	dfs1(1, 0);
+	sort(a, a + cnt);
+	cnt = unique(a, a + cnt) - a;
+	dfs2(half, 0);
+	cout << ans << endl;
+	return 0;
+}
