@@ -1,0 +1,84 @@
+#include<iostream>
+#include<cstdio>
+#include<queue>
+#include<cstring>
+using namespace std;
+int fact[9];
+bool vis[362880];
+int hashh(char s[])
+{
+	int ans = 0;
+	for (int i = 0; i < 9; i++)
+	{
+		int d = 0;
+		for (int j = 0; j < i; j++)
+		{
+			if (s[j] > s[i]) d++;
+		}
+		ans += d * fact[i];
+	}
+	return ans;
+}
+typedef struct
+{
+	char s[10];
+	int step;
+	int k;
+}point;
+int dx[4] = { -1,0,1,0 }, dy[4] = { 0,-1,0,1 };
+int bfs(point p)
+{
+	vis[hashh(p.s)] = true;
+	queue<point> q;
+	q.push(p);
+	while (q.size())
+	{
+		p = q.front();
+		q.pop();
+		if (!strcmp(p.s, "12345678x")) return p.step;
+		int x = p.k / 3;
+		int y = p.k % 3;
+		point next;
+		next.step = p.step + 1;
+		for (int i = 0; i < 4; i++)
+		{
+			int nx = x + dx[i];
+			int ny = y + dy[i];
+			if (nx >= 0 && nx <= 2 && ny >= 0 && ny <= 2)
+			{
+				next.k = nx * 3 + ny;
+				strcpy_s(next.s, p.s);
+				next.s[9] = 0;
+				next.s[p.k] = p.s[next.k];
+				next.s[next.k] = 'x';
+				int ha = hashh(next.s);
+				if (!vis[ha])
+				{
+					vis[ha] = true;
+					q.push(next);
+				}
+			}
+		}
+	}
+	return -1;
+}
+int main()
+{
+	fact[0] = 1;
+	for (int i = 1; i < 9; i++)
+		fact[i] = fact[i - 1] * i;
+	char a;
+	point start;
+	for (int i = 0; i < 9; i++)
+	{
+		cin >> a;
+		if (a == 'x') start.k = i;
+		start.s[i] =a;
+	}
+	start.s[9] = 0;
+	start.step = 0;
+	int result = bfs(start);
+	if (result == -1) cout << "impossible" << endl;
+	else cout << result << endl;
+	return 0;
+}/*2 3 4 1 5 x 7 6 8 */
